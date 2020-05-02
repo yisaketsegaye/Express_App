@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 
 module.exports = (params) => {
-  const { speakerService } = params;
+  const { feedbackService } = params;
   router.get('/', async (request, response) => {
-    const speakers = await speakerService.getList();
-    response.json(speakers);
+    const feedbacks = await feedbackService.getList();
+    response.json(feedbacks);
   });
 
   router.post('/', (request, response) => {
