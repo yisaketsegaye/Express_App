@@ -4,11 +4,13 @@ const speakerRoute = require('./speakers');
 const feedbackRoute = require('./feedback');
 
 module.exports = (params) => {
-  router.get('/', (request, response) => {
-    response.render('pages/index', { pageTitle: 'Welcome' });
+  const { speakerService } = params;
+  router.get('/', async (request, response) => {
+    topSpeakers = await speakerService.getList();
+    response.render('layout', { pageTitle: 'Welcome', template: 'index', topSpeakers });
   });
 
-  router.use('/speaker', speakerRoute(params));
+  router.use('/speakers', speakerRoute(params));
   router.use('/feedback', feedbackRoute(params));
 
   return router;
