@@ -2,6 +2,9 @@ const express = require('express');
 const path = require('path');
 const routes = require('./routes/index');
 const cookieSession = require('cookie-session');
+const createError = require('http-errors');
+const bodyParser = require('body-parser');
+
 const SpeakerService = require('./services/SpeakerService');
 const FeedbackService = require('./services/FeedbackService');
 
@@ -18,6 +21,7 @@ app.use(
     keys: ['Ghrusfsfe2434', '24fiudfhsi3re9nohhu'],
   })
 );
+app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, './views'));
 
@@ -42,6 +46,18 @@ app.use(
     feedbackService,
   })
 );
+
+app.use((request, response, next) => {
+  return next(createError(404, 'File not found'));
+});
+
+app.use((err, request, response, next) => {
+  response.locals.message = err.message;
+  const status = err.status || 500;
+  response.locals.status = status;
+  response.status(status);
+  response.render('error');
+});
 
 app.listen(port, () => {
   console.log(`Express server listning ${port}`);
