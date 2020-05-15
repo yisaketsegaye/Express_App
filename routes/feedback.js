@@ -10,6 +10,7 @@ module.exports = (params) => {
       const feedbacks = await feedbackService.getList();
 
       const errors = request.session.feedback ? request.session.feedback.errors : false;
+      const message = request.session.feedback ? request.session.feedback.message : false;
 
       // reseting the object after getting the error
       request.session.feedback = {};
@@ -18,6 +19,7 @@ module.exports = (params) => {
         template: 'feedback',
         feedbacks,
         errors,
+        message,
       });
     } catch (err) {
       return next(err);
@@ -39,7 +41,7 @@ module.exports = (params) => {
 
       check('message').trim().isLength({ min: 5 }).escape().withMessage(' A message is required'),
     ],
-    (request, response) => {
+    async (request, response) => {
       const errors = validationResult(request);
 
       if (!errors.isEmpty()) {
@@ -48,7 +50,14 @@ module.exports = (params) => {
         };
         return response.redirect('/feedback');
       }
-      return response.send('Thanks for the feedback!!');
+
+      const { name, email, title, message } = request.body;
+
+      await feedbackService.addEntry(name, email, title, message);
+      request.session.feedback = {
+        message: 'Thanks for the feedback',
+      };
+      return response.redirect('/feedback');
     }
   );
 
