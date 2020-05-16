@@ -1,6 +1,16 @@
 const express = require('express');
 const { check, validationResult } = require('express-validator');
 
+const validation = [
+  check('name').trim().isLength({ min: 3 }).escape().withMessage(' A name is required'),
+
+  check('email').trim().isEmail().normalizeEmail().withMessage('A valid email address is required'),
+
+  check('title').trim().isLength({ min: 3 }).escape().withMessage(' A title is required'),
+
+  check('message').trim().isLength({ min: 5 }).escape().withMessage(' A message is required'),
+];
+
 const router = express.Router();
 
 module.exports = (params) => {
@@ -26,24 +36,10 @@ module.exports = (params) => {
     }
   });
 
-  router.post(
-    '/',
-    [
-      check('name').trim().isLength({ min: 3 }).escape().withMessage(' A name is required'),
+  router.post('/', validation, async (request, response, next) => {
+    const errors = validationResult(request);
 
-      check('email')
-        .trim()
-        .isEmail()
-        .normalizeEmail()
-        .withMessage('A valid email address is required'),
-
-      check('title').trim().isLength({ min: 3 }).escape().withMessage(' A title is required'),
-
-      check('message').trim().isLength({ min: 5 }).escape().withMessage(' A message is required'),
-    ],
-    async (request, response) => {
-      const errors = validationResult(request);
-
+    try {
       if (!errors.isEmpty()) {
         request.session.feedback = {
           errors: errors.array(),
@@ -58,8 +54,28 @@ module.exports = (params) => {
         message: 'Thanks for the feedback',
       };
       return response.redirect('/feedback');
+    } catch (err) {
+      return next(err);
     }
-  );
+  });
+
+  router.post('/api', validation, async (request, response) => {
+    try {
+      const error = validationResult(request);
+
+      if (!error.isEmpty()) {
+        return response.json({ error: errors.array() });
+      }
+
+      const { name, email, title, message } = request.body;
+
+      await feedbackService.addEntry(name, email, title, message);
+      const feedbacks = feedbackService.getList();
+      return response.json({ feedback });
+    } catch (err) {
+      return next(err);
+    }
+  });
 
   return router;
 };
